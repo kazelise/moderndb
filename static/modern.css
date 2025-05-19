@@ -1,0 +1,559 @@
+body {
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-image: 
+    linear-gradient(to right, rgba(74, 101, 214, 0.03), rgba(2, 122, 255, 0.03)),
+    radial-gradient(circle at 15% 25%, rgba(58, 124, 237, 0.06) 0%, transparent 25%),
+    radial-gradient(circle at 85% 75%, rgba(124, 58, 237, 0.06) 0%, transparent 30%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  line-height: 1.5;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+h1, h2, h3 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  background: linear-gradient(90deg, #58a6ff, #38bdff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,183,255,0.15));
+}
+.card, .terminal-card {
+  border-radius: 0.75rem; /* Kept original, can be increased for more roundness */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.07), 
+              0 2px 4px rgba(0,0,0,0.07), 
+              0 4px 8px rgba(0,0,0,0.07), 
+              0 8px 16px rgba(0,0,0,0.07),
+              0 16px 32px rgba(0,0,0,0.07),
+              0 32px 64px rgba(0,0,0,0.07),
+              inset 0 0 0 0.5px rgba(255, 255, 255, 0.05); /* Softer, layered shadow */
+  background: rgba(22, 27, 34, 0.85); /* Slightly more translucent */
+  border: 1px solid rgba(48, 54, 61, 0.7); /* Slightly softer border */
+  overflow: hidden;
+  backdrop-filter: blur(12px); /* Enhanced blur */
+}
+.btn {
+  position: relative;
+}
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+.btn:active::before {
+  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.1);
+}
+.btn-primary, .btn-success {
+  border-radius: 6px;
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: all 0.2s ease;
+  background: #238636;
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  box-shadow: 0 0 transparent, 0 0 transparent;
+  padding: 0.5rem 1rem;
+}
+.btn-primary:hover, .btn-success:hover {
+  background: #2ea043;
+  box-shadow: 0 0 0 3px rgba(46, 160, 67, 0.3);
+  filter: brightness(1.05);
+}
+.btn-info {
+  background: #347af2;
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  color: white;
+}
+.btn-info:hover {
+  background: #3b83f6;
+  box-shadow: 0 0 0 3px rgba(59, 131, 246, 0.3);
+}
+.btn-outline-info {
+  color: #58a6ff;
+  border-color: rgba(88, 166, 255, 0.3);
+  background: rgba(56, 139, 253, 0.06);
+  transition: all 0.2s ease;
+}
+.btn-outline-info:hover {
+  background: rgba(56, 139, 253, 0.1);
+  border-color: #58a6ff;
+  color: #79c0ff;
+  box-shadow: 0 0 0 2px rgba(56, 139, 253, 0.15);
+}
+.form-control, .form-select {
+  border-radius: 6px;
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  transition: all 0.2s ease;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+  border-color: #58a6ff;
+  background: #0d1117;
+  color: #fff;
+  outline: none;
+}
+.terminal-output {
+  background: #0d1117;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  min-height: 360px;
+  transition: all 0.2s ease;
+  border: 1px solid #30363d;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', 'Consolas', monospace;
+  padding: 1rem;
+  line-height: 1.6;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(110, 118, 129, 0.4);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 148, 158, 0.4);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+@media (max-width: 600px) {
+  .terminal-card, .ai-input-bar { max-width: 98vw !important; }
+  h1 { font-size: 1.5rem; }
+  .terminal-output { font-size: 0.95rem; }
+}
+
+/* Custom Classes */
+.text-command {
+  color: #ffa657;
+  font-weight: 500;
+}
+.text-error {
+  color: #ff7b72;
+  font-weight: 500;
+  padding-left: 0.75rem; /* Added padding */
+  border-left: 3px solid #ff7b72; /* Added left border */
+  margin-bottom: 0.5rem; /* Ensure spacing */
+  line-height: 1.6; /* Ensure consistent line height */
+}
+.text-success {
+  color: #7ee787;
+  font-weight: 500;
+}
+.text-info {
+  color: #79c0ff;
+  font-weight: 500;
+}
+.text-default {
+  color: #e6edf3;
+}
+.dropdown-menu {
+  background-color: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+.dropdown-item {
+  color: #c9d1d9;
+}
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: rgba(56, 139, 253, 0.1);
+  color: #58a6ff;
+}
+.dropdown-item.active {
+  background-color: rgba(56, 139, 253, 0.15);
+  color: #58a6ff;
+}
+.dropdown-menu .p-0 {
+  padding: 0 !important;
+}
+
+.dropdown-menu .m-0 {
+  margin: 0 !important;
+}
+
+.dropdown-menu .dropdown-item {
+  padding: .25rem 1rem; /* Adjust padding as needed */
+}
+
+.badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.25em 0.6em;
+  border-radius: 12px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: rgba(var(--bs-tertiary-bg-rgb), 0.7);
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: column; /* Stack model display and controls vertically */
+  align-items: flex-end; /* Align items to the right */
+  gap: 0.25rem; /* Space between model display and controls row */
+}
+
+.current-model-display {
+  display: flex;
+  justify-content: flex-end; /* Align badge to the right */
+  width: 100%; /* Ensure it takes full width available in its column */
+}
+
+.model-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between dropdown and clear button */
+}
+
+.card-header strong {
+  font-size: 1.1rem;
+  color: var(--bs-primary);
+}
+
+.terminal-card .card-header {
+  background-color: #161b22;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  border-bottom-color: rgba(48, 54, 61, 0.6);
+}
+
+.terminal-card .card-header .badge {
+  font-size: 0.8rem;
+}
+
+.terminal-card .card-header .btn-sm {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.terminal-card .card-footer {
+  background-color: #161b22;
+  padding: 0.875rem 1rem;
+  border-top-color: rgba(48, 54, 61, 0.6);
+}
+.terminal-line {
+  display: flex;
+  margin-bottom: 0.5rem;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', 'Consolas', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.terminal-prompt {
+  color: #79c0ff;
+  margin-right: 0.5rem;
+}
+.input-group-text {
+  background-color: #0d1117;
+  border-color: #30363d; 
+  color: #8b949e;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+table.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin-bottom: 1rem;
+  background: #161b22;
+  color: #c9d1d9;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+table.table th {
+  background: #1c2128;
+  border-color: #30363d;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid #30363d;
+}
+table.table td {
+  border-color: #30363d;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid #30363d;
+  vertical-align: middle;
+}
+table.table tbody tr:last-child td {
+  border-bottom: none;
+}
+table.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(110, 118, 129, 0.04);
+}
+table.table-striped tbody tr:hover {
+  background-color: rgba(88, 166, 255, 0.12); /* More distinct hover color, slightly increased opacity */
+}
+
+/* --- AI Bottom Bar Modern Style --- */
+.ai-bottom-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  pointer-events: none; /* Container doesn't catch mouse events */
+  padding: 0 1rem 1.5rem; /* Adjusted bottom padding */
+  min-height: initial; /* Remove min-height if not needed or adjust */
+}
+
+.ai-bottom-bar form {
+  display: flex;
+  align-items: center;
+  gap: 0px; /* Initially no gap, will be applied on hover for children */
+  
+  /* Pill shape and initial collapsed size */
+  min-height: 56px; /* Fixed height for the pill */
+  max-width: 56px; /* Start as a circle/small pill */
+  padding: 0; /* Remove padding for collapsed state, rely on icon centering */
+  border-radius: 28px; /* For pill shape (height/2) */
+  
+  background: rgba(13, 17, 23, 0.9); /* Darker, more translucent */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25), 
+              0 4px 8px rgba(0,0,0,0.2),
+              inset 0 0 0 0.5px rgba(255, 255, 255, 0.07); /* Refined shadow */
+  border: 1px solid rgba(48, 54, 61, 0.9);
+  backdrop-filter: blur(16px);
+  
+  pointer-events: auto; /* Form itself is interactive */
+  overflow: hidden; /* Important for the animation */
+  
+  /* Transitions for smooth animation */
+  transition: max-width 0.45s cubic-bezier(0.23, 1, 0.32, 1), /* Smoother easing */
+              padding 0.45s cubic-bezier(0.23, 1, 0.32, 1),
+              gap 0.45s cubic-bezier(0.23, 1, 0.32, 1),
+              background-color 0.3s ease, 
+              border-color 0.3s ease, 
+              box-shadow 0.3s ease;
+}
+
+.ai-bottom-bar form:hover,
+.ai-bottom-bar form:focus-within {
+  max-width: 700px; /* Expanded width */
+  padding: 0.6rem 0.75rem 0.6rem 1.25rem; /* l-r padding, slightly less top/bottom */
+  gap: 10px; /* Gap between elements when expanded */
+  box-shadow: 0 12px 24px rgba(0,0,0,0.3), 
+              0 6px 12px rgba(0,0,0,0.25),
+              0 0 0 1px rgba(88, 166, 255, 0.6), /* Focus/hover glow */
+              inset 0 0 0 0.5px rgba(255, 255, 255, 0.07);
+  border-color: rgba(88, 166, 255, 0.7);
+}
+
+.ai-bottom-bar .ai-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px; /* Ensure icon area is consistent */
+  height: 56px;
+  transition: opacity 0.3s ease;
+  flex-shrink: 0; /* Prevent icon container from shrinking */
+}
+
+.ai-bottom-bar .ai-icon-container i {
+   font-size: 1.35rem; /* Slightly larger icon */
+   color: #58a6ff;
+   transition: color 0.3s ease;
+}
+
+.ai-bottom-bar form:hover .ai-icon-container i,
+.ai-bottom-bar form:focus-within .ai-icon-container i {
+  color: #79c0ff; /* Brighter icon on hover/focus */
+}
+
+.ai-bottom-bar input {
+  flex: 1;
+  background: transparent; /* Input bg transparent */
+  border: none; /* Remove input border, rely on form border */
+  color: #e6edf3;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  outline: none;
+  padding: 0.5rem 0.25rem; /* Minimal padding, rely on form padding */
+  width: 0; /* Start with no width */
+  opacity: 0; /* Start hidden */
+  pointer-events: none;
+  transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1) 0.05s, /* Delay width transition slightly */
+              opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1) 0.1s; /* Delay opacity transition more */
+}
+
+.ai-bottom-bar form:hover input,
+.ai-bottom-bar form:focus-within input {
+  width: auto; /* Expand to fill available space */
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ai-bottom-bar input::placeholder {
+  color: #8b949e;
+  opacity: 1;
+}
+
+.ai-bottom-bar button {
+  border-radius: 20px; /* Pill shape for button */
+  font-weight: 500; /* Slightly less bold */
+  font-size: 0.9rem;
+  padding: 0.6rem 1.1rem; /* Adjusted padding */
+  background: #347af2;
+  color: #fff;
+  border: none; /* Remove button border */
+  transition: all 0.2s ease, opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1) 0.1s, transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  opacity: 0; /* Start hidden */
+  pointer-events: none;
+  transform: scale(0.9); /* Start slightly scaled down */
+}
+
+.ai-bottom-bar form:hover button,
+.ai-bottom-bar form:focus-within button {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+/* --- Custom File Input --- */
+.custom-file-input {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.custom-file-input .actual-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.custom-file-input .file-input-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Align content to the start */
+  background-color: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-weight: 500; /* Adjusted for a less bold look, more like a placeholder */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* In case the label text itself is too long */
+}
+
+.custom-file-input .file-input-label i {
+  margin-right: 0.75rem; /* Increased space for icon */
+  font-size: 1.1rem; /* Slightly larger icon */
+  color: #8b949e; /* Icon color to match placeholder text */
+  transition: color 0.2s ease;
+}
+
+.custom-file-input .actual-input:focus + .file-input-label,
+.custom-file-input .file-input-label:hover {
+  border-color: #58a6ff;
+  background-color: #161b22;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+}
+
+.custom-file-input .actual-input:focus + .file-input-label i,
+.custom-file-input .file-input-label:hover i {
+  color: #58a6ff; /* Change icon color on hover/focus */
+}
+
+/* Style for the displayed file name */
+.custom-file-input .file-name-display {
+  display: none; /* Initially hidden, shown by JS */
+  margin-left: 0.75rem; /* Space between icon and file name text */
+  font-size: 1rem; /* Match input font size */
+  color: #c9d1d9; /* Match label text color when a file is chosen */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1; /* Allow file name to take available space */
+}
+
+/* Text for 'Choose File' or similar, hidden when file is chosen */
+.custom-file-input .choose-file-text {
+  display: inline-block; /* Or block, depending on layout */
+  color: #8b949e; /* Placeholder-like color */
+}
+
+/* --- Spinner Animation --- */
+.spinner {
+  display: inline-block;
+  width: 1.25rem; /* Adjusted size */
+  height: 1.25rem; /* Adjusted size */
+  vertical-align: -0.25em; /* Fine-tune vertical alignment */
+  border: .2em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border .75s linear infinite;
+  color: inherit; /* Inherit color from parent, can be overridden */
+}
+
+@keyframes spinner-border {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Button Loading State --- */
+.btn-loading {
+  position: relative;
+  pointer-events: none; /* Disable clicks */
+  color: transparent !important; /* Hide text by making it transparent */
+}
+
+.btn-loading .btn-content {
+  visibility: hidden; /* Hide original content */
+}
+
+.btn-loading .spinner-container {
+  display: flex !important; /* Use flex to center spinner */
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  color: #fff; /* Default spinner color for primary buttons, adjust as needed */
+}
+
+/* Specific spinner colors for different button types if needed */
+.btn-outline-info.btn-loading .spinner-container {
+  color: #58a6ff; /* Match outline button text color */
+}

@@ -1,0 +1,5 @@
+flask
+Flask-Session # Added Flask-Session
+pandas
+requests
+jinja2

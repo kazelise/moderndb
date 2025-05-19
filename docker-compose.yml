@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  flask_modern_db:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./flask_session:/app/flask_session
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0
+      # You can add other environment variables here if needed
+      # For example, to use a different API key for OpenRouter in production:
+      # - DEFAULT_API_KEY=your_production_openrouter_key

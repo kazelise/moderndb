@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ModernDB Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='modern.css') }}">
+  <style>
+    body { 
+      padding-bottom: 110px; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    code, pre, .terminal-output, .text-command, .text-error, .text-success, .text-info {
+      font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with nav -->
+  <header class="py-3 border-bottom border-secondary" style="background-color: rgba(13, 17, 23, 0.95); backdrop-filter: blur(10px);">
+    <div class="container d-flex align-items-center">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-terminal-fill me-3" style="font-size: 1.5rem; color: #58a6ff;"></i>
+        <h1 class="m-0 fs-4">ModernDB Terminal</h1>
+      </div>
+      <div class="ms-auto d-flex gap-2">
+        <form action="/check_ai_status" method="post" class="mb-0">
+          <button type="submit" class="btn btn-sm btn-outline-info">
+            <span class="btn-content"><i class="bi bi-robot me-1"></i> Check AI Status</span>
+          </button>
+        </form>
+        <a href="/export" class="btn btn-sm btn-outline-info">
+          <span class="btn-content"><i class="bi bi-download me-1"></i> Export Data</span>
+        </a>
+      </div>
+    </div>
+  </header>
+  
+  <div class="container py-4">
+    <div class="row mb-4">
+      <div class="col-md-8 mx-auto">
+        <div class="card p-3 mb-4">
+          <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-cloud-upload me-2 text-info"></i>
+            <h5 class="m-0">Data Import</h5>
+          </div>
+          <form action="/upload" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+            <div class="custom-file-input flex-grow-1">
+              <input type="file" name="file" class="actual-input" id="csvFile" required accept=".csv">
+              <label for="csvFile" class="file-input-label">
+                  <i class="bi bi-file-earmark-arrow-up"></i>
+                  <span class="choose-file-text">Choose CSV file...</span>
+                  <span class="file-name-display"></span>
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <span class="btn-content"><i class="bi bi-upload me-1"></i> Upload CSV</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="terminal-card card shadow-lg mx-auto" style="max-width: 1000px;">
+      <div class="card-header border-bottom border-dark">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-terminal me-2" style="color: #58a6ff;"></i>
+          <strong>Terminal</strong>
+          
+          <div class="header-actions">
+            <button id="clearTerminalBtn" class="btn btn-sm btn-outline-info">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="terminal-output" class="terminal-output" style="min-height: 380px; max-height: 65vh; overflow-y: auto;">
+        {% for line in terminal_output.split('<br>') if line %}
+          {% if 'error' in line or '未知命令' in line or '失败' in line or 'Unknown command' in line or 'Failed' in line %}
+            <div class="text-error">{{ line|safe }}</div>
+          {% elif 'AI建议命令' in line or '&gt;' in line or 'AI suggested command' in line %}
+            <div class="text-command">{{ line|safe }}</div>
+          {% elif '已' in line or '成功' in line or '终端已清空' in line or 'Succeeded' in line or 'cleared' in line %}
+            <div class="text-success">{{ line|safe }}</div>
+          {% elif 'help' in line or '支持的命令' in line or 'Supported commands' in line %}
+            <div class="text-info">{{ line|safe }}</div>
+          {% elif '<table' in line %}
+            {{ line|safe }}
+          {% else %}
+            <div class="text-default">{{ line|safe }}</div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      
+      <div class="card-footer border-top border-dark">
+        <form method="post" action="/terminal_command" class="d-flex gap-2">
+          <div class="input-group">
+            <span class="input-group-text bg-transparent text-secondary border-end-0">
+              <i class="bi bi-chevron-right"></i>
+            </span>
+            <input name="terminal_input" class="form-control" autocomplete="off" 
+                   placeholder="Enter command, e.g., list, add name=John age=18, help" autofocus required>
+          </div>
+          <button class="btn btn-primary" type="submit">
+            <span class="btn-content"><i class="bi bi-send-fill me-1"></i> Execute</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- AI Bottom Bar -->
+  <div class="ai-bottom-bar">
+    <form method="post" action="/ai_command">
+      <div class="ai-icon-container">
+        <i class="bi bi-stars" style="font-size: 1.2rem; color: #58a6ff;"></i>
+      </div>
+      <input name="user_input" autocomplete="off" placeholder="Ask AI" required>
+      <button type="submit">
+        <span class="btn-content"><i class="bi bi-send-fill me-1"></i> Send</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Auto scroll to bottom
+    const out = document.getElementById('terminal-output');
+    if (out) out.scrollTop = out.scrollHeight;
+    
+    // Terminal output fade-in animation
+    document.querySelectorAll('.terminal-output > div').forEach((div, index) => {
+      div.style.opacity = 0;
+      setTimeout(() => { 
+        div.style.transition = 'opacity 0.5s'; 
+        div.style.opacity = 1; 
+      }, 50 * index);
+    });
+    
+    // Client-side support for clear command
+    const clearTerminalButton = document.getElementById('clearTerminalBtn');
+    if (clearTerminalButton) {
+      clearTerminalButton.addEventListener('click', function() {
+        fetch('/terminal_command', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'terminal_input=clear'
+        }).then(response => response.json())
+        .then(data => {
+          const terminalOutput = document.getElementById('terminal-output');
+          terminalOutput.innerHTML = ''; // Clear current content
+          // Optionally, display a message from the server if needed
+          if (data && data.message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'text-success'; // Or appropriate class
+            messageDiv.textContent = data.message;
+            terminalOutput.appendChild(messageDiv);
+          }
+          terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }).catch(error => {
+          console.error('Error clearing terminal:', error);
+          // Fallback to just clearing client-side if server interaction fails
+          document.getElementById('terminal-output').innerHTML = '';
+        });
+      });
+    }
+
+    // Custom file input script
+    const actualFileInput = document.getElementById('csvFile');
+    const fileNameDisplay = document.querySelector('.custom-file-input .file-name-display');
+    const chooseFileText = document.querySelector('.custom-file-input .choose-file-text');
+
+    if (actualFileInput) {
+      actualFileInput.addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : '';
+        if (fileName) {
+          if (fileNameDisplay) {
+            fileNameDisplay.textContent = fileName;
+            fileNameDisplay.style.display = 'inline';
+          }
+          if (chooseFileText) chooseFileText.style.display = 'none';
+        } else {
+          if (fileNameDisplay) {
+            fileNameDisplay.textContent = '';
+            fileNameDisplay.style.display = 'none';
+          }
+          if (chooseFileText) chooseFileText.style.display = 'inline';
+        }
+      });
+    }
+
+    // Add loading state to form submit buttons
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', function(event) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton && !submitButton.classList.contains('btn-loading')) {
+          submitButton.classList.add('btn-loading');
+          
+          let btnContent = submitButton.querySelector('.btn-content');
+          if (!btnContent) {
+            const originalContent = Array.from(submitButton.childNodes);
+            btnContent = document.createElement('span');
+            btnContent.classList.add('btn-content');
+            originalContent.forEach(node => btnContent.appendChild(node));
+            submitButton.innerHTML = ''; 
+            submitButton.appendChild(btnContent); 
+          }
+
+          const spinnerContainer = document.createElement('span');
+          spinnerContainer.classList.add('spinner-container');
+          const spinner = document.createElement('span');
+          spinner.classList.add('spinner');
+          spinnerContainer.appendChild(spinner);
+          submitButton.appendChild(spinnerContainer);
+        }
+      });
+    });
+
+  </script>
+</body>
+</html>
