@@ -124,9 +124,98 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
 ## AI Integration Details
 
 *   The AI assistant uses the OpenRouter API to process natural language queries.
-*   You need to have a valid OpenRouter API key configured in `app.py` (variable `DEFAULT_API_KEY`) for the AI features to work reliably.
+*   You need to have a valid OpenRouter API key configured in `app.py` (variable `DEFAULT_API_KEY`) or set via the UI for the AI features to work reliably.
 *   The `system_prompt` in `app.py` defines the capabilities and JSON output format expected from the AI model. This prompt is crucial for the AI to understand the available commands and data structure.
 *   The `ai_cmd_to_str` function in `app.py` converts the AI-generated JSON command into a string format that can be processed by the `parse_terminal_command` function.
+
+## Docker Deployment
+
+This application includes a `Dockerfile` and `docker-compose.yml` for easy containerization and deployment.
+
+**Prerequisites:**
+
+*   Docker installed and running on your system.
+
+**1. Using Docker Compose (Recommended):**
+
+   This is the simplest way to get the application running with Docker.
+
+   *   **Navigate to the project directory:**
+       ```bash
+       cd flask_modern_db
+       ```
+   *   **Build and run the services:**
+       ```bash
+       docker-compose up
+       ```
+       To run in detached mode (in the background):
+       ```bash
+       docker-compose up -d
+       ```
+   *   The application will be accessible at `http://localhost:5000`.
+   *   To stop the services:
+       ```bash
+       docker-compose down
+       ```
+   *   **Environment Variables:** You can configure the `FLASK_SECRET_KEY` and `FLASK_ENV` in the `docker-compose.yml` file. For AI features, you can also set `OPENROUTER_API_KEY`, `OPENROUTER_API_URL`, and `AI_MODEL` as environment variables.
+       Example `docker-compose.yml` snippet:
+       ```yaml
+       services:
+         web:
+           # ... other configurations ...
+           environment:
+             - FLASK_SECRET_KEY=your_strong_random_secret_key
+             - FLASK_ENV=production
+             - OPENROUTER_API_KEY=your_openrouter_key_here 
+             - OPENROUTER_API_URL=https://your_custom_url # Optional
+             - AI_MODEL=your_chosen_model # Optional, e.g., mistralai/mistral-7b-instruct
+       ```
+       By default, `FLASK_ENV` is set to `production` in the `Dockerfile`.
+
+**2. Using Dockerfile directly:**
+
+   *   **Navigate to the project directory:**
+       ```bash
+       cd flask_modern_db
+       ```
+   *   **Build the Docker image:**
+       ```bash
+       docker build -t flask_modern_db_app .
+       ```
+       (You can replace `flask_modern_db_app` with your preferred image name).
+   *   **Run the Docker container:**
+       ```bash
+       docker run -d -p 5000:5000 \
+         -v "$(pwd)/data:/app/data" \
+         -v "$(pwd)/flask_session:/app/flask_session" \
+         -e FLASK_SECRET_KEY=your_strong_random_secret_key \
+         -e FLASK_ENV=production \
+         -e OPENROUTER_API_KEY=your_openrouter_key_here \
+         -e OPENROUTER_API_URL=https://your_custom_url \
+         -e AI_MODEL=your_chosen_model \
+         --name modern_db_container \
+         flask_modern_db_app
+       ```
+       *   `-d`: Runs the container in detached mode.
+       *   `-p 5000:5000`: Maps port 5000 on the host to port 5000 in the container.
+       *   `-v "$(pwd)/data:/app/data"`: Mounts the local `./data` directory to `/app/data` in the container for data persistence.
+       *   `-v "$(pwd)/flask_session:/app/flask_session"`: Mounts the local `./flask_session` directory to `/app/flask_session` in the container for session persistence.
+       *   `--name modern_db_container`: Assigns a name to the running container.
+   *   The application will be accessible at `http://localhost:5000`.
+   *   To stop the container:
+       ```bash
+       docker stop modern_db_container
+       ```
+   *   To remove the container:
+       ```bash
+       docker rm modern_db_container
+       ```
+
+**Important Considerations for Docker:**
+
+*   **`.dockerignore` file:** A `.dockerignore` file is included to prevent unnecessary files (like `.git`, `venv/`, `__pycache__/`) from being copied into the Docker image, keeping it small and build times fast.
+*   **Data Persistence:** The provided `docker-compose.yml` and `docker run` commands use volume mounts (`./data:/app/data` and `./flask_session:/app/flask_session`) to ensure that your uploaded CSV data and user session data persist even if the container is stopped or removed.
+*   **API Key for AI Features:** When running in Docker, the application will prioritize `OPENROUTER_API_KEY` environment variable if set. If not, it will check the user's session (configured via UI). If neither is available, AI features will require UI configuration. The `OPENROUTER_API_URL` and `AI_MODEL` environment variables can also be used to customize the AI service endpoint and model respectively.
 
 ## File Structure
 
