@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.9"
 services:
   flask_modern_db:
     build: .
@@ -10,6 +10,8 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_RUN_HOST=0.0.0.0
-      # You can add other environment variables here if needed
-      # For example, to use a different API key for OpenRouter in production:
-      # - DEFAULT_API_KEY=your_production_openrouter_key
+      - FLASK_ENV=production
+      # Uncomment and set these environment variables for AI features
+      # - OPENROUTER_API_KEY=your_openrouter_api_key_here
+      # - OPENROUTER_API_URL=https://openrouter.ai/api/v1
+      # - AI_MODEL=qwen/qwen3-235b-a22b:free

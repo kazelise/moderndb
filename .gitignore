@@ -1,0 +1,26 @@
+# Ignore data files but keep directory structure
+data/*
+!data/.gitkeep
+
+# Ignore session files
+flask_session/
+
+# Python bytecode files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment directories
+venv/
+env/
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

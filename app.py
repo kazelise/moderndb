@@ -64,7 +64,11 @@ def load_data():
         return pd.DataFrame()
 
 # Saves the DataFrame to a CSV file. Creates the 'data' directory if it doesn't exist.
+# Only saves non-empty DataFrames to prevent creating empty data files
 def save_data(df):
+    if df.empty:
+        # Don't save empty DataFrames
+        return
     os.makedirs("data", exist_ok=True)
     df.to_csv(DATA_PATH, index=False)
 
@@ -84,17 +88,26 @@ def append_terminal_output(msg, max_lines=50):  # Increased max_lines for better
 
 # Retrieves AI configuration (URL, API key, and model).
 def get_ai_config():
-    ai_url = DEFAULT_AI_URL  # Primarily from env or app default
+    # API URL: Env -> Session -> App Default
+    ai_url = os.environ.get("OPENROUTER_API_URL")
+    if not ai_url:
+        ai_url = session.get("api_url")
+    if not ai_url:
+        ai_url = DEFAULT_AI_URL  # Fallback to app default
     
     # API Key: Env -> Session -> App Default
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
         api_key = session.get("api_key")
     if not api_key:
-        api_key = DEFAULT_API_KEY  # Fallback to app default (which itself could be from env)
+        api_key = DEFAULT_API_KEY  # Fallback to app default
         
-    # AI Model: Env -> App Default
-    ai_model = os.environ.get("AI_MODEL", DEFAULT_AI_MODEL)
+    # AI Model: Env -> Session -> App Default
+    ai_model = os.environ.get("AI_MODEL")
+    if not ai_model:
+        ai_model = session.get("ai_model")
+    if not ai_model:
+        ai_model = DEFAULT_AI_MODEL  # Fallback to app default
 
     return ai_url, api_key, ai_model
 
@@ -125,18 +138,23 @@ def index():
 def upload():
     file = request.files["file"]
     if file:
+        # Check if the file has a .csv extension
+        if not file.filename.lower().endswith('.csv'):
+            append_terminal_output("<span style='color:red;'>Upload failed: Only CSV files are allowed.</span>")
+            return redirect(url_for("index"))
+            
         try:
             df = pd.read_csv(file)
             # Check if the uploaded CSV is empty or has no columns.
             if df.empty or len(df.columns) == 0:
-                append_terminal_output("Upload failed: File has no valid data or no header.")
+                append_terminal_output("<span style='color:red;'>Upload failed: File has no valid data or no header.</span>")
             else:
                 save_data(df)
-                append_terminal_output(f"Data uploaded. Rows: {len(df)}, Columns: {len(df.columns)}")
+                append_terminal_output(f"<span style='color:green;'>Data uploaded. Rows: {len(df)}, Columns: {len(df.columns)}</span>")
         except Exception as e:
-            append_terminal_output(f"Upload failed: {e}")
+            append_terminal_output(f"<span style='color:red;'>Upload failed: {e}</span>")
     else:
-        append_terminal_output("No file selected.")
+        append_terminal_output("<span style='color:red;'>No file selected.</span>")
     return redirect(url_for("index"))
 
 # Route for exporting data as a CSV file.
@@ -267,7 +285,7 @@ Important notes:
             
             cmd_str = ai_cmd_to_str(ai_cmd)  # Convert the AI's JSON command to a string command.
             if cmd_str:
-                append_terminal_output(f"<span style='color:yellow;'>&gt; {cmd_str}</span>")
+                append_terminal_output(f"<span style='color:green;'>&gt; {cmd_str}</span>")
                 df = load_data()
                 result = parse_terminal_command(cmd_str, df)  # Execute the command.
                 append_terminal_output(result)
@@ -283,10 +301,25 @@ Important notes:
 @app.route("/terminal_command", methods=["POST"])
 def terminal_command():
     cmd = request.form["terminal_input"]  # Command string from the terminal input field.
-    append_terminal_output(f"<span style='color:yellow;'>&gt; {cmd}</span>")
+    append_terminal_output(f"<span style='color:green;'>&gt; {cmd}</span>")
     df = load_data()
     msg = parse_terminal_command(cmd, df)  # Parse and execute the command.
     append_terminal_output(msg)
+    return redirect(url_for("index"))
+
+# Route for destroying all data
+@app.route("/destroy_data", methods=["POST"])
+def destroy_data():
+    try:
+        if os.path.exists(DATA_PATH):
+            os.remove(DATA_PATH)  # Delete data file
+            # Clear terminal output
+            session["terminal_output"] = "<span style='color:green;'>All data has been destroyed. Application reset to initial state.</span>"
+            return redirect(url_for("index"))
+        else:
+            append_terminal_output("<span style='color:orange;'>No data to destroy.</span>")
+    except Exception as e:
+        append_terminal_output(f"<span style='color:red;'>Data destruction failed: {e}</span>")
     return redirect(url_for("index"))
 
 # Converts a DataFrame to an HTML table string for display.
@@ -348,14 +381,14 @@ def parse_terminal_command(cmd, df):
 
         if op == "columns":
             if df.empty:
-                return "No data loaded"
+                return "<span style='color:orange;'>No data loaded. Please upload a CSV file first.</span>"
             # Display column names and their data types.
             cols_info = [f"{col} ({df[col].dtype})" for col in df.columns]
             return f"<pre>Available columns ({len(df.columns)}):\n{', '.join(cols_info)}</pre>"
         
         if op == "list":
             if df.empty:
-                return "No data"
+                return "<span style='color:orange;'>No data available. Please upload a CSV file first.</span>"
             return df_to_html_table(df)  # Display the current data as an HTML table.
             
         elif op == "delete_all":
@@ -656,7 +689,7 @@ def parse_terminal_command(cmd, df):
         
         elif op == "search":  # Fuzzy search across all columns.
             if df.empty:
-                return "No data to search."
+                return "<span style='color:orange;'>No data to search. Please upload a CSV file first.</span>"
             if len(tokens) < 2:
                 return "search command requires a keyword. Usage: search <keyword>"
             keyword = tokens[1]
@@ -801,14 +834,25 @@ def set_api_key():
 @app.route('/configure_api_key', methods=['POST'])
 def configure_api_key():
     api_key = request.form.get('api_key')
+    api_url = request.form.get('api_url')
+    ai_model = request.form.get('ai_model')
+    
     if api_key:
         session['api_key'] = api_key
         flash('API Key configured successfully.', 'success')
     else:
         flash('No API Key provided.', 'error')
+        
+    # Store custom API URL if provided
+    if api_url:
+        session['api_url'] = api_url
+        
+    # Store custom AI model if provided
+    if ai_model:
+        session['ai_model'] = ai_model
+        
     return redirect(url_for('index'))
 
 # Main entry point for running the Flask application.
 if __name__ == "__main__":
-    os.makedirs("data", exist_ok=True)  # Ensure data directory exists.
     app.run(debug=True)  # Run the Flask development server.

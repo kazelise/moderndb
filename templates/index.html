@@ -21,16 +21,16 @@
 </head>
 <body>
   <!-- Header with nav -->
-  <header class="py-3 border-bottom border-secondary" style="background-color: rgba(13, 17, 23, 0.95); backdrop-filter: blur(10px);">
+  <header class="py-3 border-bottom" style="background-color: rgba(248, 249, 250, 0.95); backdrop-filter: blur(10px);">
     <div class="container d-flex align-items-center">
       <div class="d-flex align-items-center">
-        <i class="bi bi-terminal-fill me-3" style="font-size: 1.5rem; color: #58a6ff;"></i>
+        <i class="bi bi-terminal-fill me-3" style="font-size: 1.5rem; color: #0d6efd;"></i>
         <h1 class="m-0 fs-4">ModernDB Terminal</h1>
       </div>
       <div class="ms-auto d-flex align-items-center gap-2">
         <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm" class="mb-0">
           <div class="input-group input-group-sm">
-            <input type="file" class="form-control form-control-sm" name="file" id="customFile" required>
+            <input type="file" class="form-control form-control-sm" name="file" id="customFile" accept=".csv" required>
             <button class="btn btn-sm btn-primary" type="submit" id="uploadButton">
               <span class="btn-content"><i class="bi bi-upload me-1"></i> Upload</span>
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
@@ -42,9 +42,18 @@
             <span class="btn-content"><i class="bi bi-robot me-1"></i> AI Status</span>
           </button>
         </form>
+        <!-- AI Settings Button - Opens modal dialog -->
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#aiSettingsModal">
+          <span class="btn-content"><i class="bi bi-gear me-1"></i> AI Settings</span>
+        </button>
         <a href="/export" class="btn btn-sm btn-outline-secondary">
           <span class="btn-content"><i class="bi bi-download me-1"></i> Export Data</span>
         </a>
+        <form action="/destroy_data" method="post" class="mb-0" onsubmit="return confirm('Are you sure you want to destroy all data? This action cannot be undone.')">
+          <button type="submit" class="btn btn-sm btn-outline-danger">
+            <span class="btn-content"><i class="bi bi-trash me-1"></i> Destroy Data</span>
+          </button>
+        </form>
       </div>
     </div>
   </header>
@@ -74,9 +83,18 @@
             <h5 class="alert-heading mb-0">AI Features Disabled</h5>
           </div>
           <p class="mb-2">To enable AI-powered features, please configure your OpenRouter API key. You can obtain an API key from <a href="https://openrouter.ai/keys" target="_blank" class="alert-link">OpenRouter</a>.</p>
-          <form action="/configure_api_key" method="post" class="d-flex gap-2">
-            <input type="text" name="api_key" class="form-control form-control-sm" placeholder="Enter your API Key" required>
-            <button type="submit" class="btn btn-sm btn-primary">Save Key</button>
+          <form action="/configure_api_key" method="post">
+            <div class="mb-2">
+              <input type="text" name="api_key" class="form-control form-control-sm" placeholder="Enter your API Key" required>
+            </div>
+            <div class="mb-2">
+              <input type="text" name="api_url" class="form-control form-control-sm" placeholder="API URL (optional, defaults to OpenRouter)" value="{{ session.get('api_url', '') }}">
+            </div>
+            <div class="mb-2">
+              <input type="text" name="ai_model" class="form-control form-control-sm" placeholder="AI Model (optional)" value="{{ session.get('ai_model', '') }}">
+              <small class="text-muted">Default: qwen/qwen3-235b-a22b:free</small>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Save Configuration</button>
           </form>
         </div>
       </div>
@@ -88,24 +106,18 @@
         <div class="d-flex align-items-center">
           <i class="bi bi-terminal me-2" style="color: #58a6ff;"></i>
           <strong>Terminal</strong>
-          
-          <div class="header-actions">
-            <button id="clearTerminalBtn" class="btn btn-sm btn-outline-info">
-              <i class="bi bi-x-circle"></i>
-            </button>
-          </div>
         </div>
       </div>
       
       <div id="terminal-output" class="terminal-output" style="min-height: 380px; max-height: 65vh; overflow-y: auto;">
         {% for line in terminal_output.split('<br>') if line %}
-          {% if 'error' in line or '未知命令' in line or '失败' in line or 'Unknown command' in line or 'Failed' in line %}
+          {% if 'error' in line or 'Unknown command' in line or 'Failed' in line %}
             <div class="text-error">{{ line|safe }}</div>
-          {% elif 'AI建议命令' in line or '&gt;' in line or 'AI suggested command' in line %}
+          {% elif '&gt;' in line or 'AI suggested command' in line %}
             <div class="text-command">{{ line|safe }}</div>
-          {% elif '已' in line or '成功' in line or '终端已清空' in line or 'Succeeded' in line or 'cleared' in line %}
+          {% elif 'Succeeded' in line or 'cleared' in line or 'success' in line %}
             <div class="text-success">{{ line|safe }}</div>
-          {% elif 'help' in line or '支持的命令' in line or 'Supported commands' in line %}
+          {% elif 'help' in line or 'Supported commands' in line %}
             <div class="text-info">{{ line|safe }}</div>
           {% elif '<table' in line %}
             {{ line|safe }}
@@ -243,5 +255,39 @@
     });
 
   </script>
+
+  <!-- AI Settings Modal -->
+  <div class="modal fade" id="aiSettingsModal" tabindex="-1" aria-labelledby="aiSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="aiSettingsModalLabel">AI Configuration Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/configure_api_key" method="post" id="aiSettingsForm">
+            <div class="mb-3">
+              <label for="api_key_input" class="form-label">API Key</label>
+              <input type="text" class="form-control" id="api_key_input" name="api_key" placeholder="Enter your OpenRouter API Key" value="{{ session.get('api_key', '') }}">
+            </div>
+            <div class="mb-3">
+              <label for="api_url_input" class="form-label">API URL</label>
+              <input type="text" class="form-control" id="api_url_input" name="api_url" placeholder="https://openrouter.ai/api/v1" value="{{ session.get('api_url', '') }}">
+              <div class="form-text">Leave empty to use the default OpenRouter API URL</div>
+            </div>
+            <div class="mb-3">
+              <label for="ai_model_input" class="form-label">AI Model</label>
+              <input type="text" class="form-control" id="ai_model_input" name="ai_model" placeholder="qwen/qwen3-235b-a22b:free" value="{{ session.get('ai_model', '') }}">
+              <div class="form-text">Leave empty to use the default model</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" form="aiSettingsForm" class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

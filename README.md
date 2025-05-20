@@ -1,11 +1,11 @@
 # Flask Modern DB: AI-Powered CSV Data Editor
 
-Flask Modern DB is a web-based application that allows users to upload, view, edit, and manage CSV data through an intuitive interface. It features a terminal-like command input for data manipulation and integrates with AI models (via OpenRouter API) to translate natural language queries into executable data operations. The application boasts a modern, dark-themed UI inspired by "Codex" or "OpenAI" aesthetics.
+Flask Modern DB is a web-based application that allows users to upload, view, edit, and manage CSV data through an intuitive interface. It features a terminal-like command input for data manipulation and integrates with AI models (via OpenRouter API) to translate natural language queries into executable data operations. The application has a clean, light-themed UI with excellent readability and modern aesthetics.
 
 ## Features
 
 *   **CSV Data Management**: Upload, view, and export data in CSV format.
-*   **Modern UI/UX**: Dark theme, responsive design, custom-styled components, and loading indicators.
+*   **Modern UI/UX**: Light theme, responsive design, custom-styled components, and loading indicators.
 *   **Terminal Interface**: Execute commands to interact with the data (list, add, update, delete, search, etc.).
 *   **Flexible Data Operations**:
     *   Add single or multiple rows (`add`, `add_batch`).
@@ -31,7 +31,7 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
 
 ## Prerequisites
 
-*   Python 3.11.11
+*   Python 3.11+
 *   pip (Python package installer)
 
 ## Installation
@@ -39,7 +39,7 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
 1.  **Clone the repository (or download the source code):**
     ```bash
     git clone https://github.com/kazelise/moderndb.git
-    cd flask_modern_db
+    cd moderndb-master
     ```
 
 2.  **Create a virtual environment (recommended):**
@@ -52,12 +52,13 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
     ```bash
     pip install -r requirements.txt
     ```
-    The `requirements.txt` file should contain:
+    The `requirements.txt` file contains:
     ```
-    Flask
-    Flask-Session
-    pandas
-    requests
+    flask==2.3.3
+    Flask-Session==0.5.0
+    pandas==2.1.0
+    requests==2.31.0
+    jinja2==3.1.2
     ```
 
 4.  **API Configuration (Optional but recommended for AI features):**
@@ -125,6 +126,7 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
 
 *   The AI assistant uses the OpenRouter API to process natural language queries.
 *   You need to have a valid OpenRouter API key configured in `app.py` (variable `DEFAULT_API_KEY`) or set via the UI for the AI features to work reliably.
+*   The UI now allows for customizing the API URL and model selection via the AI Settings panel.
 *   The `system_prompt` in `app.py` defines the capabilities and JSON output format expected from the AI model. This prompt is crucial for the AI to understand the available commands and data structure.
 *   The `ai_cmd_to_str` function in `app.py` converts the AI-generated JSON command into a string format that can be processed by the `parse_terminal_command` function.
 
@@ -220,9 +222,11 @@ This application includes a `Dockerfile` and `docker-compose.yml` for easy conta
 ## File Structure
 
 ```
-flask_modern_db/
+moderndb/
 ├── app.py            # Main Flask application, backend logic, command parsing
-├── requirements.txt  # Python dependencies
+├── Dockerfile        # Docker configuration for containerizing the application
+├── docker-compose.yml# Docker Compose configuration for easy deployment
+├── requirements.txt  # Python dependencies with locked versions
 ├── data/             # Directory for storing uploaded CSV data
 │   └── uploaded.csv  # Default name for the uploaded data file
 ├── flask_session/    # Directory for Flask session files
@@ -232,3 +236,14 @@ flask_modern_db/
     └── index.html    # Main HTML template for the user interface
 └── README.md         # This file
 ```
+
+## Recent Updates (May 2025)
+
+* Changed application theme from dark to light mode for better readability
+* Added functionality to destroy all data with one click
+* Improved text color contrast for better accessibility 
+* Enhanced AI configuration to allow for custom API URLs and models
+* Updated Docker configuration to use Python 3.11
+* Added strict file type checking for CSV uploads only
+* All user-facing messages are now in English
+* Pinned dependency versions for better stability
