@@ -1,11 +1,29 @@
 # Flask Modern DB: AI-Powered CSV Data Editor
 
-Flask Modern DB is a web-based application that allows users to upload, view, edit, and manage CSV data through an intuitive interface. It features a terminal-like command input for data manipulation and integrates with AI models (via OpenRouter API) to translate natural language queries into executable data operations. The application has a clean, light-themed UI with excellent readability and modern aesthetics.
+Flask Modern DB *   **API Configuration (Optional but recommended for AI features):**
+    The application uses a secure, multi-layered approach to manage API credentials. For persistent and reliable AI integration, you can set your API key in several ways:
+    
+    *   **Using environment variables (recommended for security):**
+        * Copy the provided `.env.example` file to a new `.env` file: `cp .env.example .env`
+        * Edit the `.env` file and fill in your actual API key and other settings
+        * The `.env` file is ignored by git (via .gitignore), ensuring your keys won't be committed to the repository
+        * Environment variables are the most secure method and take precedence over other configuration methods
+    
+    *   **Using the in-app UI:**
+        * Click on the "AI Settings" button in the application's header
+        * Enter your API key, custom URL (optional), and preferred AI model (optional)
+        * Your settings will be saved to your session, not to disk, for better security
+        * Session data is automatically cleared when the browser session ends
+    
+    *   **Configuration precedence:**
+        * Environment variables (highest priority)
+        * User session values (set via UI)
+        * Application defaults (lowest priority)ed application that allows users to upload, view, edit, and manage CSV data through an intuitive interface. It features a terminal-like command input for data manipulation and integrates with AI models (via OpenRouter API) to translate natural language queries into executable data operations. The application has a clean, light-themed UI with excellent readability and modern aesthetics.
 
 ## Features
 
-*   **CSV Data Management**: Upload, view, and export data in CSV format.
-*   **Modern UI/UX**: Light theme, responsive design, custom-styled components, and loading indicators.
+*   **CSV Data Management**: Upload, view, and export data in CSV format with robust empty file handling.
+*   **Modern UI/UX**: Light theme, responsive design, custom-styled components, loading indicators, and confirmation dialogs for destructive actions.
 *   **Terminal Interface**: Execute commands to interact with the data (list, add, update, delete, search, etc.).
 *   **Flexible Data Operations**:
     *   Add single or multiple rows (`add`, `add_batch`).
@@ -124,6 +142,7 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
         *   For bulk deletions (more than 10 rows), confirmation `confirm=yes` might be required by the AI or can be added manually (e.g., `delete age=>60 confirm=yes`).
     *   `delete_all`: Delete all data from the table. Requires confirmation.
         *   To confirm: `delete_all confirm`
+    *   **UI Data Destruction**: The application also provides a dedicated "Destroy All Data" button in the interface for quick data reset with confirmation dialog.
     *   `search <keyword>`: Perform a fuzzy search across all fields for rows containing the keyword (case-insensitive).
         *   Example: `search admin`
     *   `search_exact col=val`: Perform an exact search for rows where the specified column matches the given value.
@@ -133,10 +152,16 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
 ## AI Integration Details
 
 *   The AI assistant uses the OpenRouter API to process natural language queries.
-*   You need to have a valid OpenRouter API key configured in `app.py` (variable `DEFAULT_API_KEY`) or set via the UI for the AI features to work reliably.
-*   The UI now allows for customizing the API URL and model selection via the AI Settings panel.
+*   You need to have a valid OpenRouter API key configured for AI features to work reliably, which can be set through:
+    * Environment variables (most secure, see `.env.example`)
+    * The AI Settings panel in the UI (persists in session storage)
+*   The enhanced UI now allows for:
+    * Setting custom API URLs (useful for self-hosted LLM endpoints or enterprise scenarios)
+    * Selecting different AI models from the OpenRouter ecosystem
+    * Secure session-based storage of credentials (not saved to disk)
 *   The `system_prompt` in `app.py` defines the capabilities and JSON output format expected from the AI model. This prompt is crucial for the AI to understand the available commands and data structure.
 *   The `ai_cmd_to_str` function in `app.py` converts the AI-generated JSON command into a string format that can be processed by the `parse_terminal_command` function.
+*   The application now implements a secure credential flow that prioritizes environment variables over session storage, with fallback to defaults.
 
 ## Docker Deployment
 
@@ -236,26 +261,30 @@ moderndb/
 ├── docker-compose.yml# Docker Compose configuration for easy deployment
 ├── requirements.txt  # Python dependencies with locked versions
 ├── .env.example      # Template for environment variables (copy to .env for local use)
+├── .gitignore        # Specifies files to exclude from version control
 ├── data/             # Directory for storing uploaded CSV data
-│   └── uploaded.csv  # Default name for the uploaded data file
+│   ├── uploaded.csv  # Default name for the uploaded data file
+│   └── .gitkeep      # Empty file to maintain directory structure in git
 ├── flask_session/    # Directory for Flask session files
 ├── static/
 │   └── modern.css    # Custom CSS for styling the application
-└── templates/
-    └── index.html    # Main HTML template for the user interface
+├── templates/
+│   └── index.html    # Main HTML template for the user interface
 └── README.md         # This file
 ```
 
 ## Recent Updates (May 2025)
 
-* Changed application theme from dark to light mode for better readability
-* Added functionality to destroy all data with one click
-* Improved text color contrast for better accessibility 
-* Enhanced AI configuration to allow for custom API URLs and models
-* Updated Docker configuration to use Python 3.11
-* Added strict file type checking for CSV uploads only
-* All user-facing messages are now in English
-* Pinned dependency versions for better stability
-* Improved empty file handling to avoid EmptyDataError exceptions
+* Changed application theme from dark to light mode for better readability and accessibility
+* Added functionality to destroy all data with confirmation dialog for safety
+* Enhanced AI configuration UI to allow customizing API URL and model selection
+* Updated Docker configuration to use Python 3.11 for better performance
+* Added strict file type checking for CSV uploads only to prevent errors
+* All user-facing messages standardized to English for consistency
+* Pinned dependency versions for better stability and reproducibility
+* Improved empty file handling to prevent EmptyDataError exceptions
 * Added `.env.example` template for secure environment variable configuration
-* Enhanced security for API key management
+* Enhanced security for API key management using environment variables
+* Added `.gitignore` patterns to exclude sensitive data from version control
+* Added `data/.gitkeep` to maintain directory structure without storing data in git repository
+* Improved error handling and user feedback throughout the application
