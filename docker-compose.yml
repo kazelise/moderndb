@@ -7,11 +7,13 @@ services:
     volumes:
       - ./data:/app/data
       - ./flask_session:/app/flask_session
+    env_file:
+      - .env  # Load environment variables from .env file (recommended)
     environment:
       - FLASK_APP=app.py
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_ENV=production
-      # Uncomment and set these environment variables for AI features
+      # You can also set variables here or in .env
       # - OPENROUTER_API_KEY=your_openrouter_api_key_here
       # - OPENROUTER_API_URL=https://openrouter.ai/api/v1
       # - AI_MODEL=qwen/qwen3-235b-a22b:free

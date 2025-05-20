@@ -6,6 +6,9 @@ import shlex
 from flask_session import Session
 import json
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_default_secret_key')  # Ensure a secret key is set for sessions
@@ -16,7 +19,8 @@ Session(app)
 DATA_PATH = "data/uploaded.csv"  # Path to the CSV file where data is stored
 # AI Configuration: Prioritize environment variables, then app defaults.
 DEFAULT_AI_URL = os.environ.get("OPENROUTER_API_URL", "https://openrouter.ai/api/v1")
-DEFAULT_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")  # Default API Key for the AI service, can be overridden by session
+# API Key must be provided via environment variable for security
+DEFAULT_API_KEY = ""  # Empty default - must be set via environment variable
 DEFAULT_AI_MODEL = os.environ.get("AI_MODEL", "qwen/qwen3-235b-a22b:free")  # Default AI model
 
 # Helper function to attempt type casting for assignment, inferring from target series or by trying common types.
@@ -100,12 +104,10 @@ def get_ai_config():
     if not ai_url:
         ai_url = DEFAULT_AI_URL  # Fallback to app default
     
-    # API Key: Env -> Session -> App Default
-    api_key = os.environ.get("OPENROUTER_API_KEY")
+    # API Key: Env only - no longer store in session for security
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
     if not api_key:
-        api_key = session.get("api_key")
-    if not api_key:
-        api_key = DEFAULT_API_KEY  # Fallback to app default
+        api_key = DEFAULT_API_KEY  # Fallback to app default (empty string)
         
     # AI Model: Env -> Session -> App Default
     ai_model = os.environ.get("AI_MODEL")
@@ -119,7 +121,7 @@ def get_ai_config():
 # Error handler for 413 Request Entity Too Large (file upload exceeds limit).
 @app.errorhandler(413)
 def request_entity_too_large(e):
-    append_terminal_output(f"<span style='color:red;'>Upload failed: File is larger than 10MB.</span>")
+    append_terminal_output(f"<div class='text-error'>Upload failed: File is larger than 10MB.</div>")
     return redirect(url_for("index"))
 
 # Route for the main page. Loads data and renders the index.html template.
@@ -145,7 +147,7 @@ def upload():
     if file:
         # Check if the file has a .csv extension
         if not file.filename.lower().endswith('.csv'):
-            append_terminal_output("<span style='color:red;'>Upload failed: Only CSV files are allowed.</span>")
+            append_terminal_output("<div class='text-error'>Upload failed: Only CSV files are allowed.</div>")
             return redirect(url_for("index"))
             
         try:
@@ -286,11 +288,11 @@ Important notes:
             # Replace 'undefined' with 'null' for better JSON parsing compatibility.
             content = re.sub(r':\s*undefined', ': null', content)
             ai_cmd = json.loads(content)  # Parse the JSON command.
-            append_terminal_output(f"<span style='color:cyan;'>AI suggested command: {ai_cmd}</span>")
+            append_terminal_output(f"<div class='text-info'>AI suggested command: {ai_cmd}</div>")
             
             cmd_str = ai_cmd_to_str(ai_cmd)  # Convert the AI's JSON command to a string command.
             if cmd_str:
-                append_terminal_output(f"<span style='color:green;'>&gt; {cmd_str}</span>")
+                append_terminal_output(f"<div class='text-command'>&gt; {cmd_str}</div>")
                 df = load_data()
                 result = parse_terminal_command(cmd_str, df)  # Execute the command.
                 append_terminal_output(result)
@@ -306,7 +308,7 @@ Important notes:
 @app.route("/terminal_command", methods=["POST"])
 def terminal_command():
     cmd = request.form["terminal_input"]  # Command string from the terminal input field.
-    append_terminal_output(f"<span style='color:green;'>&gt; {cmd}</span>")
+    append_terminal_output(f"<div class='text-command'>&gt; {cmd}</div>")
     df = load_data()
     msg = parse_terminal_command(cmd, df)  # Parse and execute the command.
     append_terminal_output(msg)
@@ -324,10 +326,10 @@ def destroy_data():
         open(DATA_PATH, 'w').close()
         
         # Clear terminal output
-        session["terminal_output"] = "<span style='color:green;'>All data has been destroyed. Application reset to initial state.</span>"
+        session["terminal_output"] = "<div class='text-success'>All data has been destroyed. Application reset to initial state.</div>"
         return redirect(url_for("index"))
     except Exception as e:
-        append_terminal_output(f"<span style='color:red;'>Data destruction failed: {e}</span>")
+        append_terminal_output(f"<div class='text-error'>Data destruction failed: {e}</div>")
     return redirect(url_for("index"))
 
 # Converts a DataFrame to an HTML table string for display.
@@ -363,7 +365,7 @@ def parse_terminal_command(cmd, df):
         
         if op == "clear":
             session["terminal_output"] = ""  # Clear terminal history from session.
-            return "<span style='color:green;'>Terminal cleared.</span>"
+            return "<div class='text-success'>Terminal cleared.</div>"
             
         if op == "help":
             # Display help text for available commands.
@@ -389,28 +391,28 @@ def parse_terminal_command(cmd, df):
 
         if op == "columns":
             if df.empty:
-                return "<span style='color:orange;'>No data loaded. Please upload a CSV file first.</span>"
+                return "<div class='text-command'>No data loaded. Please upload a CSV file first.</div>"
             # Display column names and their data types.
             cols_info = [f"{col} ({df[col].dtype})" for col in df.columns]
             return f"<pre>Available columns ({len(df.columns)}):\n{', '.join(cols_info)}</pre>"
         
         if op == "list":
             if df.empty:
-                return "<span style='color:orange;'>No data available. Please upload a CSV file first.</span>"
+                return "<div class='text-command'>No data available. Please upload a CSV file first.</div>"
             return df_to_html_table(df)  # Display the current data as an HTML table.
             
         elif op == "delete_all":
             if df.empty:
-                return "<span style='color:orange;'>No data to delete</span>"
+                return "<div class='text-command'>No data to delete</div>"
             # Requires confirmation to delete all data.
             if len(tokens) > 1 and tokens[1].lower() == "confirm":
                 # Create an empty file directly, which is more consistent
                 # with our handling of empty data elsewhere
                 os.makedirs("data", exist_ok=True)
                 open(DATA_PATH, 'w').close()
-                return f"<span style='color:red;'>All data deleted. Original row count: {len(df)}</span>"
+                return f"<div class='text-error'>All data deleted. Original row count: {len(df)}</div>"
             else:
-                return f"<span style='color:orange;'>Warning: You are about to delete all {len(df)} rows. To confirm, type: delete_all confirm</span>"
+                return f"<div class='text-command'>Warning: You are about to delete all {len(df)} rows. To confirm, type: delete_all confirm</div>"
 
         elif op == "add":
             # Parse arguments for the 'add' command (e.g., col1=val1 col2=val2).
@@ -834,8 +836,9 @@ def ai_cmd_to_str(ai_cmd):
 def set_api_key():
     api_key_from_form = request.form.get("api_key_input")
     if api_key_from_form:
-        session["api_key"] = api_key_from_form
-        append_terminal_output("<span style='color:green;'>API Key has been set for this session.</span>")
+        # For security reasons, API keys should not be stored in session
+        append_terminal_output("<span style='color:red;'>For security, API keys can only be configured via environment variables.</span>")
+        append_terminal_output("<span style='color:orange;'>Please set the OPENROUTER_API_KEY environment variable instead.</span>")
     else:
         append_terminal_output("<span style='color:red;'>No API Key provided in the form.</span>")
     return redirect(url_for("index"))
@@ -847,18 +850,19 @@ def configure_api_key():
     ai_model = request.form.get('ai_model')
     
     if api_key:
-        session['api_key'] = api_key
-        flash('API Key configured successfully.', 'success')
-    else:
-        flash('No API Key provided.', 'error')
-        
+        # Do not store API keys in session for security reasons
+        flash('For security, API Keys can only be set through environment variables.', 'warning')
+        flash('Please use the OPENROUTER_API_KEY environment variable instead.', 'info')
+    
     # Store custom API URL if provided
     if api_url:
         session['api_url'] = api_url
+        flash('API URL configured successfully.', 'success')
         
     # Store custom AI model if provided
     if ai_model:
         session['ai_model'] = ai_model
+        flash('AI model configured successfully.', 'success')
         
     return redirect(url_for('index'))
 

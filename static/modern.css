@@ -145,9 +145,9 @@ h1, h2, h3 {
   outline: none;
 }
 .terminal-output {
-  background: #f8f9fa;
+  background: #f1f2f3; /* Slightly darker background for better contrast with text */
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.95rem; /* Slightly larger for better readability */
   min-height: 360px;
   transition: all 0.2s ease;
   border: 1px solid #dee2e6;
@@ -156,6 +156,36 @@ h1, h2, h3 {
   line-height: 1.6;
   color: #212529;
 }
+
+/* Terminal Output Improvements */
+.terminal-output > div {
+  margin-bottom: 6px;
+  padding: 3px 0;
+}
+
+/* Add a subtle hover effect to terminal lines for better readability */
+.terminal-output > div:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 3px;
+}
+
+/* Improve spacing in terminal */
+#terminal-output {
+  padding: 1.25rem;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Better spacing for command blocks */
+.text-command {
+  padding: 4px 8px;
+  margin: 3px 0;
+  border-radius: 3px;
+  background-color: rgba(253, 126, 20, 0.05);
+  display: inline-block;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -181,32 +211,37 @@ h1, h2, h3 {
 @media (max-width: 600px) {
   .terminal-card, .ai-input-bar { max-width: 98vw !important; }
   h1 { font-size: 1.5rem; }
-  .terminal-output { font-size: 0.95rem; }
+  .terminal-output { font-size: 1rem; } /* Slightly larger for mobile readability */
 }
 
 /* Custom Classes */
 .text-command {
-  color: #fd7e14;
-  font-weight: 500;
+  color: #d96800; /* Darker orange for better contrast */
+  font-weight: 600;
 }
 .text-error {
-  color: #dc3545;
-  font-weight: 500;
+  color: #be2130; /* Darker red for better contrast */
+  font-weight: 600;
   padding-left: 0.75rem; /* Added padding */
   border-left: 3px solid #dc3545; /* Added left border */
   margin-bottom: 0.5rem; /* Ensure spacing */
   line-height: 1.6; /* Ensure consistent line height */
+  background-color: rgba(220, 53, 69, 0.05); /* Light background for emphasis */
+  padding: 0.3rem 0.75rem;
+  border-radius: 0 3px 3px 0;
 }
 .text-success {
-  color: #198754;
-  font-weight: 500;
+  color: #0a6640; /* Darker green for better contrast */
+  font-weight: 600;
+  padding-left: 0.25rem;
 }
 .text-info {
-  color: #0d6efd; /* Changed from #0dcaf0 to a deeper blue that's easier to read */
-  font-weight: 500;
+  color: #0450c7; /* Darker blue for better contrast */
+  font-weight: 600; /* Slightly bolder for better readability */
 }
 .text-default {
   color: #212529;
+  font-weight: 500; /* Added to improve readability */
 }
 .dropdown-menu {
   background-color: #ffffff;

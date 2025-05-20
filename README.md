@@ -1,29 +1,11 @@
 # Flask Modern DB: AI-Powered CSV Data Editor
 
-Flask Modern DB *   **API Configuration (Optional but recommended for AI features):**
-    The application uses a secure, multi-layered approach to manage API credentials. For persistent and reliable AI integration, you can set your API key in several ways:
-    
-    *   **Using environment variables (recommended for security):**
-        * Copy the provided `.env.example` file to a new `.env` file: `cp .env.example .env`
-        * Edit the `.env` file and fill in your actual API key and other settings
-        * The `.env` file is ignored by git (via .gitignore), ensuring your keys won't be committed to the repository
-        * Environment variables are the most secure method and take precedence over other configuration methods
-    
-    *   **Using the in-app UI:**
-        * Click on the "AI Settings" button in the application's header
-        * Enter your API key, custom URL (optional), and preferred AI model (optional)
-        * Your settings will be saved to your session, not to disk, for better security
-        * Session data is automatically cleared when the browser session ends
-    
-    *   **Configuration precedence:**
-        * Environment variables (highest priority)
-        * User session values (set via UI)
-        * Application defaults (lowest priority)ed application that allows users to upload, view, edit, and manage CSV data through an intuitive interface. It features a terminal-like command input for data manipulation and integrates with AI models (via OpenRouter API) to translate natural language queries into executable data operations. The application has a clean, light-themed UI with excellent readability and modern aesthetics.
+Flask Modern DB is a web-based application that allows users to upload, view, edit, and manage CSV data through an intuitive interface. It features a terminal-like command input for data manipulation and integrates with AI models (via OpenRouter API) to translate natural language queries into executable data operations. The application has a clean, light-themed UI with excellent readability and modern aesthetics.
 
 ## Features
 
-*   **CSV Data Management**: Upload, view, and export data in CSV format with robust empty file handling.
-*   **Modern UI/UX**: Light theme, responsive design, custom-styled components, loading indicators, and confirmation dialogs for destructive actions.
+*   **CSV Data Management**: Upload, view, and export data in CSV format.
+*   **Modern UI/UX**: Light theme, responsive design, custom-styled components, and loading indicators.
 *   **Terminal Interface**: Execute commands to interact with the data (list, add, update, delete, search, etc.).
 *   **Flexible Data Operations**:
     *   Add single or multiple rows (`add`, `add_batch`).
@@ -51,13 +33,14 @@ Flask Modern DB *   **API Configuration (Optional but recommended for AI feature
 
 *   Python 3.11+
 *   pip (Python package installer)
+*   [python-dotenv](https://pypi.org/project/python-dotenv/) (for local .env support)
 
 ## Installation
 
 1.  **Clone the repository (or download the source code):**
     ```bash
     git clone https://github.com/kazelise/moderndb.git
-    cd moderndb-master
+    cd moderndb
     ```
 
 2.  **Create a virtual environment (recommended):**
@@ -77,20 +60,28 @@ Flask Modern DB *   **API Configuration (Optional but recommended for AI feature
     pandas==2.1.0
     requests==2.31.0
     jinja2==3.1.2
+    python-dotenv==1.0.1
     ```
 
-4.  **API Configuration (Optional but recommended for AI features):**
-    The application uses default API endpoint and a placeholder key for OpenRouter. For persistent and reliable AI integration, you can set your API key in several ways:
+4.  **API Configuration (Required for AI features):**
+    The application uses environment variables for all sensitive configuration. You can set your API key in several ways:
     
-    *   **Using environment variables (recommended for security):**
+    *   **Using a .env file (recommended for local development):**
         * Copy the provided `.env.example` file to a new `.env` file: `cp .env.example .env`
         * Edit the `.env` file and fill in your actual API key and other settings
         * The `.env` file is ignored by git, ensuring your keys won't be committed to the repository
+        * The app will automatically load `.env` using `python-dotenv`
     
-    *   **Using the in-app UI:**
-        * Click on the "AI Settings" button in the application's header
-        * Enter your API key, custom URL (optional), and preferred AI model (optional)
-        * Your settings will be saved to your session
+    *   **Using shell environment variables (for production or Docker):**
+        * Export variables in your shell before running the app:
+          ```fish
+          set -x OPENROUTER_API_KEY your_api_key_here
+          set -x FLASK_SECRET_KEY your_flask_secret
+          python app.py
+          ```
+    
+    *   **Using Docker Compose:**
+        * See the Docker section below for details.
 
 ## Usage
 
@@ -109,10 +100,7 @@ Flask Modern DB *   **API Configuration (Optional but recommended for AI feature
     *   **Export Data**:
         *   Click the "Export Data" button to download the current dataset as a CSV file.
     *   **AI Commands**:
-        *   **Fetch Models**: Click "Fetch Models" under the "AI Assistant" card. Currently, it's hardcoded to a specific Qwen model.
-        *   **Select Model**: Choose a model from the dropdown list.
-        *   **Set Model**: Click "Set Model" to activate the selected AI model.
-        *   **Enter Query**: Type your data request in natural language (e.g., "add a new user with name John and age 30", "show all users older than 25") into the AI input bar at the bottom and press Enter or click the send button.
+        *   Type your data request in natural language (e.g., "add a new user with name John and age 30", "show all users older than 25") into the AI input bar at the bottom and press Enter or click the send button.
         *   The AI will attempt to translate your query into a JSON command, which is then converted to a terminal command and executed. Both the AI's suggested JSON and the executed command will appear in the terminal.
     *   **Terminal Commands**:
         *   Type commands directly into the "Terminal Input" field under the "Terminal" card and press Enter or click "Execute".
@@ -142,7 +130,6 @@ Flask Modern DB *   **API Configuration (Optional but recommended for AI feature
         *   For bulk deletions (more than 10 rows), confirmation `confirm=yes` might be required by the AI or can be added manually (e.g., `delete age=>60 confirm=yes`).
     *   `delete_all`: Delete all data from the table. Requires confirmation.
         *   To confirm: `delete_all confirm`
-    *   **UI Data Destruction**: The application also provides a dedicated "Destroy All Data" button in the interface for quick data reset with confirmation dialog.
     *   `search <keyword>`: Perform a fuzzy search across all fields for rows containing the keyword (case-insensitive).
         *   Example: `search admin`
     *   `search_exact col=val`: Perform an exact search for rows where the specified column matches the given value.
@@ -152,16 +139,10 @@ Flask Modern DB *   **API Configuration (Optional but recommended for AI feature
 ## AI Integration Details
 
 *   The AI assistant uses the OpenRouter API to process natural language queries.
-*   You need to have a valid OpenRouter API key configured for AI features to work reliably, which can be set through:
-    * Environment variables (most secure, see `.env.example`)
-    * The AI Settings panel in the UI (persists in session storage)
-*   The enhanced UI now allows for:
-    * Setting custom API URLs (useful for self-hosted LLM endpoints or enterprise scenarios)
-    * Selecting different AI models from the OpenRouter ecosystem
-    * Secure session-based storage of credentials (not saved to disk)
+*   You must have a valid OpenRouter API key configured via environment variable or .env file for AI features to work.
+*   The UI does not support setting API keys for security reasons.
 *   The `system_prompt` in `app.py` defines the capabilities and JSON output format expected from the AI model. This prompt is crucial for the AI to understand the available commands and data structure.
 *   The `ai_cmd_to_str` function in `app.py` converts the AI-generated JSON command into a string format that can be processed by the `parse_terminal_command` function.
-*   The application now implements a secure credential flow that prioritizes environment variables over session storage, with fallback to defaults.
 
 ## Docker Deployment
 
@@ -173,11 +154,9 @@ This application includes a `Dockerfile` and `docker-compose.yml` for easy conta
 
 **1. Using Docker Compose (Recommended):**
 
-   This is the simplest way to get the application running with Docker.
-
    *   **Navigate to the project directory:**
        ```bash
-       cd flask_modern_db
+       cd moderndb
        ```
    *   **Build and run the services:**
        ```bash
@@ -192,50 +171,42 @@ This application includes a `Dockerfile` and `docker-compose.yml` for easy conta
        ```bash
        docker-compose down
        ```
-   *   **Environment Variables:** You can configure the `FLASK_SECRET_KEY` and `FLASK_ENV` in the `docker-compose.yml` file. For AI features, you can also set `OPENROUTER_API_KEY`, `OPENROUTER_API_URL`, and `AI_MODEL` as environment variables.
-       Example `docker-compose.yml` snippet:
-       ```yaml
-       services:
-         web:
-           # ... other configurations ...
-           environment:
-             - FLASK_SECRET_KEY=your_strong_random_secret_key
-             - FLASK_ENV=production
-             - OPENROUTER_API_KEY=your_openrouter_key_here 
-             - OPENROUTER_API_URL=https://your_custom_url # Optional
-             - AI_MODEL=your_chosen_model # Optional, e.g., mistralai/mistral-7b-instruct
-       ```
-       By default, `FLASK_ENV` is set to `production` in the `Dockerfile`.
+   *   **Environment Variables:**
+       * By default, Docker Compose will read from a `.env` file in the project root (see `.env.example`).
+       * You can also set environment variables directly in `docker-compose.yml` under the `environment` section.
+       * Example:
+         ```yaml
+         environment:
+           - FLASK_SECRET_KEY=your_strong_random_secret_key
+           - FLASK_ENV=production
+           - OPENROUTER_API_KEY=your_openrouter_key_here
+           - OPENROUTER_API_URL=https://openrouter.ai/api/v1
+           - AI_MODEL=qwen/qwen3-235b-a22b:free
+         ```
 
 **2. Using Dockerfile directly:**
 
    *   **Navigate to the project directory:**
        ```bash
-       cd flask_modern_db
+       cd moderndb
        ```
    *   **Build the Docker image:**
        ```bash
        docker build -t flask_modern_db_app .
        ```
-       (You can replace `flask_modern_db_app` with your preferred image name).
    *   **Run the Docker container:**
        ```bash
        docker run -d -p 5000:5000 \
-         -v "$(pwd)/data:/app/data" \
-         -v "$(pwd)/flask_session:/app/flask_session" \
+         -v "(pwd)/data:/app/data" \
+         -v "(pwd)/flask_session:/app/flask_session" \
          -e FLASK_SECRET_KEY=your_strong_random_secret_key \
          -e FLASK_ENV=production \
          -e OPENROUTER_API_KEY=your_openrouter_key_here \
-         -e OPENROUTER_API_URL=https://your_custom_url \
-         -e AI_MODEL=your_chosen_model \
+         -e OPENROUTER_API_URL=https://openrouter.ai/api/v1 \
+         -e AI_MODEL=qwen/qwen3-235b-a22b:free \
          --name modern_db_container \
          flask_modern_db_app
        ```
-       *   `-d`: Runs the container in detached mode.
-       *   `-p 5000:5000`: Maps port 5000 on the host to port 5000 in the container.
-       *   `-v "$(pwd)/data:/app/data"`: Mounts the local `./data` directory to `/app/data` in the container for data persistence.
-       *   `-v "$(pwd)/flask_session:/app/flask_session"`: Mounts the local `./flask_session` directory to `/app/flask_session` in the container for session persistence.
-       *   `--name modern_db_container`: Assigns a name to the running container.
    *   The application will be accessible at `http://localhost:5000`.
    *   To stop the container:
        ```bash
@@ -250,7 +221,7 @@ This application includes a `Dockerfile` and `docker-compose.yml` for easy conta
 
 *   **`.dockerignore` file:** A `.dockerignore` file is included to prevent unnecessary files (like `.git`, `venv/`, `__pycache__/`) from being copied into the Docker image, keeping it small and build times fast.
 *   **Data Persistence:** The provided `docker-compose.yml` and `docker run` commands use volume mounts (`./data:/app/data` and `./flask_session:/app/flask_session`) to ensure that your uploaded CSV data and user session data persist even if the container is stopped or removed.
-*   **API Key for AI Features:** When running in Docker, the application will prioritize `OPENROUTER_API_KEY` environment variable if set. If not, it will check the user's session (configured via UI). If neither is available, AI features will require UI configuration. The `OPENROUTER_API_URL` and `AI_MODEL` environment variables can also be used to customize the AI service endpoint and model respectively.
+*   **API Key for AI Features:** When running in Docker, the application will prioritize `OPENROUTER_API_KEY` environment variable if set. If not, it will check the `.env` file if present. The `OPENROUTER_API_URL` and `AI_MODEL` environment variables can also be used to customize the AI service endpoint and model respectively.
 
 ## File Structure
 
@@ -273,18 +244,16 @@ moderndb/
 └── README.md         # This file
 ```
 
+## Security Notice
+
+- **API keys and all sensitive configuration must be set via environment variables or .env file.**
+- **The frontend does not support API key configuration for security reasons.**
+- **Never commit your real .env file or API keys to version control.**
+
 ## Recent Updates (May 2025)
 
-* Changed application theme from dark to light mode for better readability and accessibility
-* Added functionality to destroy all data with confirmation dialog for safety
-* Enhanced AI configuration UI to allow customizing API URL and model selection
-* Updated Docker configuration to use Python 3.11 for better performance
-* Added strict file type checking for CSV uploads only to prevent errors
-* All user-facing messages standardized to English for consistency
-* Pinned dependency versions for better stability and reproducibility
-* Improved empty file handling to prevent EmptyDataError exceptions
-* Added `.env.example` template for secure environment variable configuration
-* Enhanced security for API key management using environment variables
-* Added `.gitignore` patterns to exclude sensitive data from version control
-* Added `data/.gitkeep` to maintain directory structure without storing data in git repository
-* Improved error handling and user feedback throughout the application
+* Added python-dotenv support for .env file loading
+* All AI/API key configuration is now environment variable only
+* Removed all frontend API key input and settings
+* Improved English-only user-facing messages
+* Security best practices for all deployment scenarios

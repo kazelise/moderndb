@@ -2,8 +2,12 @@
 data/*
 !data/.gitkeep
 
-# Ignore session files
+# Ignore session files (may contain sensitive data)
 flask_session/
+flask_session/*
+
+# Ignore environment variables file (contains API keys and secrets)
+.env
 
 # Python bytecode files
 __pycache__/
