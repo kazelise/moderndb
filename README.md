@@ -62,9 +62,17 @@ Flask Modern DB is a web-based application that allows users to upload, view, ed
     ```
 
 4.  **API Configuration (Optional but recommended for AI features):**
-    The application uses default API endpoint and a placeholder key for OpenRouter. For persistent and reliable AI integration, you might want to update these in `app.py`:
-    *   `DEFAULT_AI_URL`: Change if you use a different OpenRouter compatible endpoint.
-    *   `DEFAULT_API_KEY`: **Replace `"sk-or-v1-..."` with your actual OpenRouter API key.**
+    The application uses default API endpoint and a placeholder key for OpenRouter. For persistent and reliable AI integration, you can set your API key in several ways:
+    
+    *   **Using environment variables (recommended for security):**
+        * Copy the provided `.env.example` file to a new `.env` file: `cp .env.example .env`
+        * Edit the `.env` file and fill in your actual API key and other settings
+        * The `.env` file is ignored by git, ensuring your keys won't be committed to the repository
+    
+    *   **Using the in-app UI:**
+        * Click on the "AI Settings" button in the application's header
+        * Enter your API key, custom URL (optional), and preferred AI model (optional)
+        * Your settings will be saved to your session
 
 ## Usage
 
@@ -227,6 +235,7 @@ moderndb/
 ├── Dockerfile        # Docker configuration for containerizing the application
 ├── docker-compose.yml# Docker Compose configuration for easy deployment
 ├── requirements.txt  # Python dependencies with locked versions
+├── .env.example      # Template for environment variables (copy to .env for local use)
 ├── data/             # Directory for storing uploaded CSV data
 │   └── uploaded.csv  # Default name for the uploaded data file
 ├── flask_session/    # Directory for Flask session files
@@ -247,3 +256,6 @@ moderndb/
 * Added strict file type checking for CSV uploads only
 * All user-facing messages are now in English
 * Pinned dependency versions for better stability
+* Improved empty file handling to avoid EmptyDataError exceptions
+* Added `.env.example` template for secure environment variable configuration
+* Enhanced security for API key management

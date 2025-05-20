@@ -56,21 +56,26 @@ def _attempt_cast_for_assignment(value_str, target_series_for_dtype_inference):
         # If any type conversion fails, return the original string value.
         return str(value_str)
 
-# Loads data from the CSV file. Returns an empty DataFrame if the file doesn't exist.
+# Loads data from the CSV file. Returns an empty DataFrame if the file doesn't exist or is empty.
 def load_data():
     if os.path.exists(DATA_PATH):
-        return pd.read_csv(DATA_PATH)
+        try:
+            return pd.read_csv(DATA_PATH)
+        except pd.errors.EmptyDataError:
+            # Handle empty file case
+            return pd.DataFrame()
     else:
         return pd.DataFrame()
 
 # Saves the DataFrame to a CSV file. Creates the 'data' directory if it doesn't exist.
-# Only saves non-empty DataFrames to prevent creating empty data files
+# If the DataFrame is empty, creates an empty CSV file to maintain consistency
 def save_data(df):
-    if df.empty:
-        # Don't save empty DataFrames
-        return
     os.makedirs("data", exist_ok=True)
-    df.to_csv(DATA_PATH, index=False)
+    if df.empty:
+        # Create an empty file when df is empty
+        open(DATA_PATH, 'w').close()
+    else:
+        df.to_csv(DATA_PATH, index=False)
 
 # Retrieves the terminal output from the session.
 def get_terminal_output():
@@ -311,13 +316,16 @@ def terminal_command():
 @app.route("/destroy_data", methods=["POST"])
 def destroy_data():
     try:
-        if os.path.exists(DATA_PATH):
-            os.remove(DATA_PATH)  # Delete data file
-            # Clear terminal output
-            session["terminal_output"] = "<span style='color:green;'>All data has been destroyed. Application reset to initial state.</span>"
-            return redirect(url_for("index"))
-        else:
-            append_terminal_output("<span style='color:orange;'>No data to destroy.</span>")
+        # Ensure data directory exists
+        os.makedirs("data", exist_ok=True)
+        
+        # Create an empty file rather than removing it
+        # This avoids EmptyDataError when the app tries to read it
+        open(DATA_PATH, 'w').close()
+        
+        # Clear terminal output
+        session["terminal_output"] = "<span style='color:green;'>All data has been destroyed. Application reset to initial state.</span>"
+        return redirect(url_for("index"))
     except Exception as e:
         append_terminal_output(f"<span style='color:red;'>Data destruction failed: {e}</span>")
     return redirect(url_for("index"))
@@ -393,15 +401,16 @@ def parse_terminal_command(cmd, df):
             
         elif op == "delete_all":
             if df.empty:
-                return "No data to delete"
+                return "<span style='color:orange;'>No data to delete</span>"
             # Requires confirmation to delete all data.
             if len(tokens) > 1 and tokens[1].lower() == "confirm":
-                # Create an empty DataFrame while preserving column schema.
-                empty_df = pd.DataFrame(columns=df.columns)
-                save_data(empty_df)
+                # Create an empty file directly, which is more consistent
+                # with our handling of empty data elsewhere
+                os.makedirs("data", exist_ok=True)
+                open(DATA_PATH, 'w').close()
                 return f"<span style='color:red;'>All data deleted. Original row count: {len(df)}</span>"
             else:
-                return f"Warning: You are about to delete all {len(df)} rows. To confirm, type: delete_all confirm"
+                return f"<span style='color:orange;'>Warning: You are about to delete all {len(df)} rows. To confirm, type: delete_all confirm</span>"
 
         elif op == "add":
             # Parse arguments for the 'add' command (e.g., col1=val1 col2=val2).
